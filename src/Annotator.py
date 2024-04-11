@@ -1,18 +1,17 @@
-import dearpygui.dearpygui as dpg
-import math
-import numpy as np
-import torch
-import trimesh
 import os
-import json
-from utils import *
+
+import dearpygui.dearpygui as dpg
+import torch
 from graphviz import Digraph
+
+from src.utils import *
 
 
 class Annotator:
 
-    def __init__(self, instances, relation_names, object_names, instances_to_label, scene_id, current_folder):
+    def __init__(self, instances, relation_names, object_names, instances_to_label, scene_id, current_folder, config):
         self.scene_id = scene_id
+        self.config = config
         self.instances = instances
         self.instances_names = np.unique(instances)
         self.instances_to_label = instances_to_label
@@ -168,7 +167,9 @@ class Annotator:
         with open(filename, "w") as f:
             json.dump(self.annotation_result, f, indent=4)
 
-        rel_file = "data/ScanNet_sets/relation_label.txt"
+        rel_file = os.path.join(self.config.root, "data/ScanNet_sets/relation_label.txt")
+        print(rel_file)
+        print(self.config.root)
         with open(rel_file, "w") as f:
             for i in self.relation_names:
                 f.write(i + "\n")
@@ -184,11 +185,27 @@ class Annotator:
         self.show_controls()
 
     def _initial_windows(self):
-        self.window_anno_0 = dpg.add_window(label="Annotation", width=500, height=500, tag="window_anno_0")
-        self.window_anno_1 = dpg.add_window(label="Annotation result", width=500, height=1000, tag="window_anno_1")
-        self.window_anno_2 = dpg.add_window(label="Relation Backup", width=1500, height=800, tag="window_anno_2")
-        self.window_anno_3 = dpg.add_window(label="recommend_relation", width=1500, height=800, tag="window_anno_3")
-        self.window_anno_4 = dpg.add_window(label="recommend_object", width=1500, height=800, tag="window_anno_4")
+        self.window_anno_0 = dpg.add_window(label="Annotation", no_close=True, width=2000, height=500,
+                                            tag="window_anno_0")
+        self.window_anno_1 = dpg.add_window(label="Annotation result", no_close=True, width=500, height=1000,
+                                            tag="window_anno_1")
+        self.window_anno_2 = dpg.add_window(label="Relation Backup", no_close=True, width=1500, height=800,
+                                            tag="window_anno_2")
+        self.window_anno_3 = dpg.add_window(label="recommend_relation", no_close=True, width=1500, height=800,
+                                            tag="window_anno_3")
+        self.window_anno_4 = dpg.add_window(label="recommend_object", no_close=True, width=1500, height=800,
+                                            tag="window_anno_4")
+
+        # self.window_anno_0 = dpg.add_window(label="Annotation", width=int(self.config.main_screen[0] * 0.4),
+        #                                     height=int(self.config.main_screen[1] * 0.4), tag="window_anno_0")
+        # self.window_anno_1 = dpg.add_window(label="Annotation result", width=int(self.config.main_screen[0] * 0.4),
+        #                                     height=int(self.config.main_screen[0] * 0.4), tag="window_anno_1")
+        # self.window_anno_2 = dpg.add_window(label="Relation Backup", width=int(self.config.main_screen[0] * 0.2),
+        #                                     height=int(self.config.main_screen[1] * 0.4), tag="window_anno_2")
+        # self.window_anno_3 = dpg.add_window(label="recommend_relation", width=int(self.config.main_screen[0] * 0.4),
+        #                                     height=int(self.config.main_screen[1] * 0.4), tag="window_anno_3")
+        # self.window_anno_4 = dpg.add_window(label="recommend_object", width=int(self.config.main_screen[0] * 0.4),
+        #                                     height=int(self.config.main_screen[1] * 0.4), tag="window_anno_4")
 
     def show_scene_graph(self):
         scene_graph = Digraph(comment='Scene Graph', format='png')
@@ -228,37 +245,39 @@ class Annotator:
         dpg.add_combo([f"{i}-{self.object_names[self.instances_to_label[i] - 1]}" for i in self.instances_names],
                       tag="object",
                       label="object", default_value=" ", callback=self._set_sub_obj_pre)
-        dpg.add_button(label="Add", callback=self.add_annotation_result)
+        dpg.add_button(label="    Add    ", callback=self.add_annotation_result)
         dpg.pop_container_stack()
 
         dpg.push_container_stack(self.window_anno_1)
         self.annotation_list_box_id = \
             dpg.add_listbox(
                 [self._list_to_triplet(idx, i) for idx, i in enumerate(self.annotation_result["relationships"])]
-                , callback=self._set_selected_triplet, num_items=10, width=300)
+                , callback=self._set_selected_triplet, num_items=10, width=-1)
         with dpg.group(horizontal=True):
-            dpg.add_button(label="Delete", callback=self._delete_selected_triplet)
-            dpg.add_button(label="Show Scene Graph", callback=self.show_scene_graph)
+            dpg.add_button(label="   Delete   ", callback=self._delete_selected_triplet)
+            dpg.add_button(label="   Show Scene Graph   ", callback=self.show_scene_graph)
         dpg.pop_container_stack()
 
         dpg.push_container_stack(self.window_anno_2)
         dpg.add_input_text(label="input text", default_value="New_relation", callback=self._get_add_rel)
         with dpg.group(horizontal=True):
-            dpg.add_button(label="Add", callback=self._add_relation)
-            dpg.add_button(label="Delete", callback=self._del_relation)
+            dpg.add_button(label="    Add    ", callback=self._add_relation)
+            dpg.add_button(label="    Delete    ", callback=self._del_relation)
 
         self.relation_list_box_id = \
             dpg.add_listbox(
                 self.relation_names,
-                label="listbox", callback=self._set_rel_to_del, num_items=10)
+                label="listbox", callback=self._set_rel_to_del, num_items=10, width=-1)
         dpg.pop_container_stack()
 
         dpg.push_container_stack(self.window_anno_3)
         dpg.add_text("recommend_relations")
-        dpg.add_listbox([" " for i in range(10)], num_items=10, tag="recommend_rel_list", callback=self._set_predicate)
+        dpg.add_listbox([" " for i in range(10)], num_items=10, tag="recommend_rel_list", callback=self._set_predicate,
+                        width=-1)
         dpg.pop_container_stack()
 
         dpg.push_container_stack(self.window_anno_4)
         dpg.add_text("recommend_objects")
-        dpg.add_listbox([" " for i in range(10)], num_items=10, tag="recommend_obj_list", callback=self._set_object)
+        dpg.add_listbox([" " for i in range(10)], num_items=10, tag="recommend_obj_list", callback=self._set_object,
+                        width=-1)
         dpg.pop_container_stack()

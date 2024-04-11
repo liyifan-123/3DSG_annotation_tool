@@ -52,6 +52,8 @@ def load_mesh(label_file="scene0000_01_vh_clean_2.labels.ply"):
 if __name__ == "__main__":
     root_dir = "D:\Annotation System\data"
     folder_list = os.listdir(root_dir)
+    if "ScanNet_sets" in folder_list:
+        folder_list.remove("ScanNet_sets")
     label_fixed, label_dict = read_object_label_list()
 
     for scene_id in tqdm(folder_list):

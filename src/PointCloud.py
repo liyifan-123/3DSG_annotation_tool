@@ -1,8 +1,9 @@
-import time
-import dearpygui.dearpygui as dpg
 import math
-from utils import *
+
+import dearpygui.dearpygui as dpg
 import numpy as np
+
+from src.utils import *
 
 
 class PointCloud:

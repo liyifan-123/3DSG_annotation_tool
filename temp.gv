@@ -1,0 +1,17 @@
+// Scene Graph
+digraph {
+	"5-curtain" [label="5-curtain" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"6-curtain" [label="6-curtain" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"5-curtain" -> "6-curtain" [label=behind color="#000000"]
+	"15-tv" [label="15-tv" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"5-curtain" -> "15-tv" [label=behind color="#000000"]
+	"19-wall" [label="19-wall" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"5-curtain" -> "19-wall" [label=behind color="#000000"]
+	"55-ceiling" [label="55-ceiling" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"5-curtain" -> "55-ceiling" [label=behind color="#000000"]
+	"17-clock" [label="17-clock" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"5-curtain" -> "17-clock" [label=behind color="#000000"]
+	"2-table" [label="2-table" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"4-shower" [label="4-shower" color="#000000" fillcolor="#f5d0e1" fontcolor="#000000" shape=box style=filled]
+	"2-table" -> "4-shower" [label=behind color="#000000"]
+}

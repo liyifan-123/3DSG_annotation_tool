@@ -1,29 +1,29 @@
-import dearpygui.dearpygui as dpg
-import math
-import numpy as np
-import trimesh
+import argparse
 import os
-import json
-from utils import *
 
-from PointCloud import PointCloud
-from Camera import Camera
-from Annotator import Annotator
+import dearpygui.dearpygui as dpg
+from screeninfo import get_monitors
+
+from Configs.config import Config
+from src.Annotator import Annotator
+from src.Camera import Camera
+from src.PointCloud import PointCloud
+from src.utils import *
 
 
 class Main:
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.reload = False
-        self.file_name = "scene0000_00_vh_clean_2.labels.instances.ply"
-        self.file_folder = "data/scene0000_00"
-        self.scene_id = "scene0000_00"
-        self.lable_type = "raw"
+        self.file_name = self.config.initialize.file_name
+        self.file_folder = self.config.initialize.file_folder
+        self.scene_id = self.config.initialize.scene_id
         self.annotator = None
-        if self.lable_type == "raw":
-            self.object_names = read_text_class("data/ScanNet_sets/object_fixed_label.txt")
+        if self.config.label_type == "raw":
+            self.object_names = read_text_class(os.path.join(self.config.scannet_path, "object_fixed_label.txt"))
         else:
-            self.object_names = read_text_class("data/ScanNet_sets/object_label.txt")
-        self.relation_names = read_text_class("data/ScanNet_sets/relation_label.txt")
+            self.object_names = read_text_class(os.path.join(self.config.scannet_path, "object_label.txt"))
+        self.relation_names = read_text_class(os.path.join(self.config.scannet_path, "relation_label.txt"))
         self.width = dpg.get_viewport_client_width()
         self.height = dpg.get_viewport_client_height()
         self.camera = Camera(dpg.mvVec4(0.0, 0.0, 30.0, 1.0), 0.0, 0.0)
@@ -35,7 +35,7 @@ class Main:
         self.file_folder = value["current_path"]
         self.scene_id = value["file_name"][:12]
         points, colors, instances, labels, face = load_mesh(os.path.join(self.file_folder, self.file_name),
-                                                            self.lable_type)
+                                                            self.config.label_type)
         instances_to_color, instances_to_label = get_instance_color_label_dict(instances, colors, labels)
 
         self.annotator.point_cloud.initialize(points, face, colors, instances, labels, instances_to_color,
@@ -52,10 +52,12 @@ class Main:
     def set_main_window(self, rect):
         with dpg.window(tag="Primary Window"):
             with dpg.file_dialog(directory_selector=False, show=False, callback=self._reload_func, id="file_dialog_id",
-                                 width=700, height=400, file_count=1, modal=True, default_path=self.file_folder):
+                                 width=int(self.config.main_screen[0] * 0.5),
+                                 height=int(self.config.main_screen[1] * 0.5),
+                                 file_count=1, modal=True, default_path=self.file_folder):
                 dpg.add_file_extension("", color=(150, 255, 150, 255))
                 dpg.add_file_extension(".ply", color=(255, 100, 100, 255), custom_text="[Ply]")
-                dpg.add_file_extension(".py", color=(0, 255, 0, 255), custom_text="[Python]")
+                # dpg.add_file_extension(".py", color=(0, 255, 0, 255), custom_text="[Python]")
 
             with dpg.menu_bar():
                 with dpg.menu(label="Files"):
@@ -81,10 +83,10 @@ class Main:
 
     def load_pointcloud_annotator(self):
         points, colors, instances, labels, face = load_mesh(os.path.join(self.file_folder, self.file_name),
-                                                            self.lable_type)
+                                                            self.config.label_type)
         instances_to_color, instances_to_label = get_instance_color_label_dict(instances, colors, labels)
         self.annotator = Annotator(instances, self.relation_names, self.object_names, instances_to_label, self.scene_id,
-                                   self.file_folder)
+                                   self.file_folder, self.config)
         self.annotator.point_cloud = PointCloud(self.object_names, points, colors, [0, 0], instances, labels,
                                                 instances_to_color, instances_to_label, face, "Primary Window",
                                                 "pc_drawlist")
@@ -157,13 +159,37 @@ class Main:
             dpg.render_dearpygui_frame()
 
 
+def load_config():
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--config', type=str, default='Configs/config.json',
+                        help='configuration file name. Relative path under given path (default: config.yml)')
+    args = parser.parse_args()
+
+    config_path = os.path.abspath(args.config)
+    config = Config(config_path)
+
+    monitors = get_monitors()
+    config.main_screen = [int(monitors[0].width * 0.8), int(monitors[0].height * 0.8)]
+    config.root = os.path.dirname(__file__)
+
+    return config
+
+
 if __name__ == "__main__":
+    config = load_config()
+
     dpg.create_context()
-    dpg.configure_app(init_file="custom_layout.ini")
-    dpg.create_viewport(title='Custom Window Size', width=2200, height=1200)
+    with dpg.font_registry():
+        font = dpg.add_font("Configs/Roboto-Regular-14.ttf", config.font_size)
+        dpg.bind_font(font)
+
+    dpg.configure_app(init_file="Configs/custom_layout.ini")
+    # dpg.configure_app()
+    dpg.create_viewport(title='Custom Window Size', width=config.main_screen[0],
+                        height=config.main_screen[1])
     dpg.setup_dearpygui()
 
-    main = Main()
+    main = Main(config)
     main.main_loop()
 
     dpg.destroy_context()
