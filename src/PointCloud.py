@@ -1,7 +1,6 @@
 import math
 
 import dearpygui.dearpygui as dpg
-import numpy as np
 
 from src.utils import *
 
@@ -9,7 +8,9 @@ from src.utils import *
 class PointCloud:
 
     def __init__(self, object_names, points, colors, center, instances, labels,
-                 instances_to_color, instances_to_label, face, primary_window, pc_drawlist, pos=[0, 0, 0], radis=1.2):
+                 instances_to_color, instances_to_label, face, primary_window, pc_drawlist, config, pos=[0, 0, 0],
+                 radis=1.2):
+        self.config = config
 
         self.points, self.colors, self.instances, self.face, self.primary_window, self.pc_drawlist = \
             points, colors, instances, face, primary_window, pc_drawlist
@@ -41,7 +42,7 @@ class PointCloud:
         self.travel_speed = 0.1
         self.window_width = 0.0
         self.window_height = 0.0
-        self.show_mode = "mesh"  # 物体的展示格式：point_cloud和mesh
+        self.show_mode = "point_cloud"  # 物体的展示格式：point_cloud和mesh
         self.last_highlight_sub = None
         self.last_highlight_obj = None  # 记录上一个高亮的Instance
 
@@ -103,18 +104,24 @@ class PointCloud:
 
         # 两种展示格式
         if self.show_mode == "point_cloud":
-            for i, point in enumerate(self.points):
+            Size = min(self.points.shape[0] * 0.7, self.config.max_show_points)
+            t_indices = np.random.choice(self.points.shape[0], size=Size, replace=True)
+            t_points = self.points[t_indices, :]
+            t_colors = self.colors[t_indices, :].tolist()
+            t_instances = self.instances[t_indices]
+            for i, point in enumerate(t_points):
                 dpg.draw_circle((point[0], point[1], point[2]),
-                                3, color=self.colors[i], fill=self.colors[i], show=True,
-                                parent=f"{self.instances[i]}_ins")
+                                self.config.pc_radius, color=t_colors[i], fill=t_colors[i], show=True,
+                                parent=f"{t_instances[i]}_ins")
 
         if self.show_mode == "mesh":
+            t_colors = self.colors.tolist()
             for i, triangle in enumerate(self.face):
                 dpg.draw_triangle(
                     (self.points[triangle[0]][0], self.points[triangle[0]][1], self.points[triangle[0]][2]),
                     (self.points[triangle[1]][0], self.points[triangle[1]][1], self.points[triangle[1]][2]),
                     (self.points[triangle[2]][0], self.points[triangle[2]][1], self.points[triangle[2]][2]),
-                    color=self.colors[triangle[0]], fill=self.colors[triangle[0]], show=True, thickness=1,
+                    color=t_colors[triangle[0]], fill=t_colors[triangle[0]], show=True, thickness=1,
                     parent=f"{self.instances[triangle[0]]}_ins")
 
         # # draw_bbox
@@ -147,7 +154,7 @@ class PointCloud:
         if self.show_mode == "point_cloud":
             for i, point in enumerate(self.points[indices]):
                 dpg.draw_circle((point[0], point[1], point[2]),
-                                3, color=[255, 0, 0, 255], fill=[255, 0, 0, 255], show=True,
+                                4, color=[255, 0, 0, 255], fill=[255, 0, 0, 255], show=True,
                                 parent=f"temp_{s_or_o}_ins")
 
         if self.show_mode == "mesh":
@@ -180,11 +187,11 @@ class PointCloud:
             self.draw(indices, instance, s_or_o)
 
     def _set_seen_instance(self, sender, value):
-        print(sender)
-        print(f"{sender}_ins")
+        # print(sender)
+        # print(f"{sender}_ins")
         # print(self.instances_node_list)
-        print(np.where(self.instances_names == int(sender)))
-        print(self.instances_node_list[0])
+        # print(np.where(self.instances_names == int(sender)))
+        # print(self.instances_node_list[0])
         dpg.configure_item(item=f"{sender}_ins", show=value)
 
     def _set_show_mode(self, sender, value):
@@ -195,7 +202,7 @@ class PointCloud:
         self.submit()
         dpg.pop_container_stack()
         dpg.pop_container_stack()
-        print(value)
+        # print(value)
 
     def toggle_moving(self):
         self.moving = not self.moving
@@ -274,9 +281,6 @@ class PointCloud:
         self.window_0 = dpg.add_window(label="Controls", width=500, height=500, tag="window_0")
         self.window_1 = dpg.add_window(label="Instance_list", width=500, height=500, tag="window_1")
 
-    def _choose_sub_or_obj(self, a):
-        print("aaaaaaaaaaaaa")
-
     def show_controls(self):
         dpg.push_container_stack(self.window_0)
         dpg.add_checkbox(label="depth_clipping", default_value=self.depth_clipping,
@@ -289,7 +293,7 @@ class PointCloud:
         #                      callback=lambda s, a: self._set_cull_mode(a))
         dpg.add_text("show_mode")
         dpg.add_radio_button(["mesh", "point_cloud"],
-                             default_value="mesh", label="show_mode",
+                             default_value="point_cloud", label="show_mode",
                              callback=self._set_show_mode)
         dpg.add_slider_floatx(label="Position", size=3, callback=lambda s, a: self._set_position(a))
         dpg.add_slider_floatx(label="Rotation", size=3, min_value=-math.pi, max_value=math.pi,

@@ -100,12 +100,12 @@ class Annotator:
 
     def _set_predicate(self, sender, app_data):
         # 在候选object列表中选择object
-        print(app_data)
+        # print(app_data)
         dpg.configure_item("predicate", default_value=app_data.split("_")[0])
         self.pre = app_data.split("_")[0]
 
     def _set_selected_triplet(self, s, v, a):
-        print(s, v, a)
+        # print(s, v, a)
         self.selected_triplet = int(v.split(":")[0])
 
     def _set_annotation_list(self):
@@ -117,7 +117,7 @@ class Annotator:
             dpg.configure_item(self.annotation_list_box_id, item=None)
 
     def _delete_selected_triplet(self, s, v, a):
-        print(s, v, a)
+        # print(s, v, a)
         del self.annotation_result["relationships"][self.selected_triplet]
         self._set_annotation_list()
 
@@ -139,22 +139,22 @@ class Annotator:
             dpg.configure_item(self.relation_list_box_id, item=None)
 
     def _add_relation(self, s, v):
-        print(s, v)
+        # print(s, v)
         if self.to_add_relation not in self.relation_names:
             self.relation_names.append(self.to_add_relation)
         self._set_relation_list()
 
     def _set_rel_to_del(self, s, v, a):
-        print(s, v, a)
+        # print(s, v, a)
         self.to_del_relation = v
 
     def _del_relation(self, s, v):
-        print(s, v)
+        # print(s, v)
         del self.relation_names[self.relation_names.index(self.to_del_relation)]
         self._set_relation_list()
 
     def add_annotation_result(self):
-        print(self.sub, self.pre, self.obj)
+        # print(self.sub, self.pre, self.obj)
         sub_id = int(self.sub.split("-")[0])
         obj_id = int(self.obj.split("-")[0])
         t = [sub_id, obj_id, self.relation_names.index(self.pre), self.pre]
@@ -168,8 +168,8 @@ class Annotator:
             json.dump(self.annotation_result, f, indent=4)
 
         rel_file = os.path.join(self.config.root, "data/ScanNet_sets/relation_label.txt")
-        print(rel_file)
-        print(self.config.root)
+        # print(rel_file)
+        # print(self.config.root)
         with open(rel_file, "w") as f:
             for i in self.relation_names:
                 f.write(i + "\n")

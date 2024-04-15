@@ -29,7 +29,7 @@ class Main:
         self.camera = Camera(dpg.mvVec4(0.0, 0.0, 30.0, 1.0), 0.0, 0.0)
 
     def _reload_func(self, sender, value):
-        print(sender, value)
+        # print(sender, value)
         self.reload = True
         self.file_name = value["file_name"]
         self.file_folder = value["current_path"]
@@ -41,6 +41,8 @@ class Main:
         self.annotator.point_cloud.initialize(points, face, colors, instances, labels, instances_to_color,
                                               instances_to_label)
         self.annotator.initialize(instances, instances_to_label, self.file_folder)
+
+        dpg.configure_item("file_dialog_id", default_path=self.file_folder)  # 修改读取文件模块的默认文件路径
 
     def reset_view_matrix(self):
         self.annotator.point_cloud._set_rotation([0.0, 0.0, 0.0])
@@ -89,7 +91,7 @@ class Main:
                                    self.file_folder, self.config)
         self.annotator.point_cloud = PointCloud(self.object_names, points, colors, [0, 0], instances, labels,
                                                 instances_to_color, instances_to_label, face, "Primary Window",
-                                                "pc_drawlist")
+                                                "pc_drawlist", self.config)
 
         self.annotator.show_controls()
         self.annotator.point_cloud.show_controls()

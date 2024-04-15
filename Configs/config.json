@@ -4,6 +4,8 @@
   "label_type": "raw",
   "main_screen": [2200, 1000],
   "font_size": 25,
+  "max_show_points": 30000,
+  "pc_radius": 6,
   "initialize": {
     "file_name": "scene0000_00_vh_clean_2.labels.instances.ply",
     "file_folder": "data/scene0000_00",

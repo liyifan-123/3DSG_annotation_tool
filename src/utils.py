@@ -27,7 +27,7 @@ def load_mesh(label_file="scene0000_01_vh_clean_2.labels.instances.ply", label_t
 
     rgbs = np.array(plydata.visual.vertex_colors.tolist())[:, :3]
     rgbs = np.hstack([rgbs, np.ones([rgbs.shape[0], 1]) * 255])
-    rgbs = rgbs.astype("int").tolist()
+    rgbs = rgbs.astype("int")
 
     center = (np.amax(points, axis=0) + np.amin(points, axis=0)) / 2
 
